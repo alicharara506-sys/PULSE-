@@ -1,0 +1,231 @@
+openapi: 3.1.0
+info:
+  # Do not change the title, if the title changes, the import paths will be broken
+  title: Api
+  version: 0.1.0
+  description: API specification
+servers:
+  - url: /api
+    description: Base API path
+tags:
+  - name: health
+    description: Health operations
+  - name: nutrition
+    description: Nutrition AI operations
+paths:
+  /healthz:
+    get:
+      operationId: healthCheck
+      tags: [health]
+      summary: Health check
+      description: Returns server health status
+      responses:
+        "200":
+          description: Healthy
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HealthStatus"
+  /nutrition/analyze:
+    post:
+      operationId: analyzeMeal
+      tags: [nutrition]
+      summary: Estimate meal nutrition from a photo
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/AnalyzeMealRequest"
+      responses:
+        "200":
+          description: Estimated meal nutrition
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/MealEstimate"
+  /nutrition/meal-plan:
+    post:
+      operationId: generateMealPlan
+      tags: [nutrition]
+      summary: Generate a personalized weekly meal plan
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/MealPlanRequest"
+      responses:
+        "200":
+          description: A seven-day meal plan
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/MealPlanResponse"
+  /nutrition/coach:
+    post:
+      operationId: askNutritionCoach
+      tags: [nutrition]
+      summary: Ask the nutrition coach with profile and diary context
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CoachRequest"
+      responses:
+        "200":
+          description: Supportive nutrition coaching response
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CoachResponse"
+  /nutrition/barcode/{barcode}:
+    get:
+      operationId: lookupBarcode
+      tags: [nutrition]
+      summary: Look up packaged food nutrition by barcode
+      parameters:
+        - in: path
+          name: barcode
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Label nutrition for the listed serving
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/BarcodeFood"
+        "404":
+          description: Barcode was not found in the nutrition database
+components:
+  schemas:
+    HealthStatus:
+      type: object
+      properties:
+        status:
+          type: string
+      required:
+        - status
+    AnalyzeMealRequest:
+      type: object
+      properties:
+        imageBase64:
+          type: string
+        imageMimeType:
+          type: string
+        language:
+          type: string
+      required: [imageBase64, imageMimeType, language]
+    MealEstimate:
+      type: object
+      properties:
+        name:
+          type: string
+        calories:
+          type: integer
+        protein:
+          type: integer
+        carbs:
+          type: integer
+        fat:
+          type: integer
+        portion:
+          type: string
+        confidence:
+          type: string
+          enum: [low, medium, high]
+        items:
+          type: array
+          items:
+            type: string
+      required: [name, calories, protein, carbs, fat, portion, confidence, items]
+    MealPlanRequest:
+      type: object
+      properties:
+        calorieTarget:
+          type: integer
+        proteinTarget:
+          type: integer
+        carbsTarget:
+          type: integer
+        fatTarget:
+          type: integer
+        preferences:
+          type: array
+          items:
+            type: string
+        exclusions:
+          type: string
+        language:
+          type: string
+      required: [calorieTarget, proteinTarget, carbsTarget, fatTarget, preferences, exclusions, language]
+    PlannedMeal:
+      type: object
+      properties:
+        day:
+          type: string
+        type:
+          type: string
+        name:
+          type: string
+        calories:
+          type: integer
+        protein:
+          type: integer
+        carbs:
+          type: integer
+        fat:
+          type: integer
+        recipe:
+          type: string
+      required: [day, type, name, calories, protein, carbs, fat, recipe]
+    MealPlanResponse:
+      type: object
+      properties:
+        meals:
+          type: array
+          items:
+            $ref: "#/components/schemas/PlannedMeal"
+        groceryList:
+          type: array
+          items:
+            type: string
+      required: [meals, groceryList]
+    CoachRequest:
+      type: object
+      properties:
+        message:
+          type: string
+        context:
+          type: string
+        language:
+          type: string
+      required: [message, context, language]
+    CoachResponse:
+      type: object
+      properties:
+        answer:
+          type: string
+      required: [answer]
+    BarcodeFood:
+      type: object
+      properties:
+        barcode:
+          type: string
+        name:
+          type: string
+        calories:
+          type: integer
+        protein:
+          type: integer
+        carbs:
+          type: integer
+        fat:
+          type: integer
+        portion:
+          type: string
+      required: [barcode, name, calories, protein, carbs, fat, portion]
+
